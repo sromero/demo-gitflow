@@ -1,0 +1,42 @@
+name: Auto Sync (RC -> Develop)
+
+on:
+  push:
+    branches:
+      - release-candidate
+
+jobs:
+  create-sync-pr:
+    runs-on: ubuntu-latest
+    if: github.event.pusher.name != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create PR to develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE_BRANCH="develop"
+          FROM_BRANCH="${GITHUB_REF##*/}"
+
+          git fetch origin $BASE_BRANCH
+          git checkout -b sync-$FROM_BRANCH-to-$BASE_BRANCH origin/$FROM_BRANCH
+
+          git pull origin $FROM_BRANCH
+          git pull origin $BASE_BRANCH --no-rebase
+
+          git push origin sync-$FROM_BRANCH-to-$BASE_BRANCH
+
+          gh pr create \
+            --title "Sync $FROM_BRANCH into $BASE_BRANCH" \
+            --body "Auto-generated PR to sync $FROM_BRANCH into $BASE_BRANCH after recent merge." \
+            --base $BASE_BRANCH \
+            --head sync-$FROM_BRANCH-to-$BASE_BRANCH \
+            --label "sync"
