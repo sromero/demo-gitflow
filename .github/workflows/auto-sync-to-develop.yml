@@ -21,7 +21,8 @@ jobs:
 
       - name: Create PR to develop
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}  # 👈 Usamos GH_PAT como en hotfix
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          
         run: |
           BASE_BRANCH="develop"
           FROM_BRANCH="${GITHUB_REF##*/}"
