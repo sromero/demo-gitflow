@@ -1,0 +1,27 @@
+name: Create PR from master to develop (Hotfix Sync)
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    if: github.event.pusher.name != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Create PR from master to develop
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: develop
+          head: master
+          title: "🔧 Sync hotfix from master to develop"
+          body: |
+            This PR syncs hotfixes from `master` into `develop` automatically.
+          branch: auto/hotfix-to-develop
+          delete-branch: true
