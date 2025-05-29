@@ -1,3 +1,4 @@
 Initial commit
 Fix typo.
 Fix text for hotfix 1
+Fix text for hotfix 2
