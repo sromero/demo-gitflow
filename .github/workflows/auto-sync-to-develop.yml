@@ -1,4 +1,4 @@
-name: Auto Sync (RC -> Develop)
+name: Auto Sync (RC → Develop)
 
 on:
   push:
@@ -21,22 +21,25 @@ jobs:
 
       - name: Create PR to develop
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}  # 👈 Usamos GH_PAT como en hotfix
         run: |
           BASE_BRANCH="develop"
           FROM_BRANCH="${GITHUB_REF##*/}"
+          TEMP_BRANCH="sync-${FROM_BRANCH}-to-${BASE_BRANCH}-$(date +%s)"
+
+          echo "➡️ Syncing $FROM_BRANCH → $BASE_BRANCH"
 
           git fetch origin $BASE_BRANCH
-          git checkout -b sync-$FROM_BRANCH-to-$BASE_BRANCH origin/$FROM_BRANCH
+          git checkout -b "$TEMP_BRANCH" origin/$FROM_BRANCH
 
-          git pull origin $FROM_BRANCH
-          git pull origin $BASE_BRANCH --no-rebase
+          git pull origin $BASE_BRANCH --no-rebase || true
 
-          git push origin sync-$FROM_BRANCH-to-$BASE_BRANCH
+          git push origin "$TEMP_BRANCH"
+
+          gh auth login --with-token <<< "$GH_TOKEN"
 
           gh pr create \
             --title "Sync $FROM_BRANCH into $BASE_BRANCH" \
-            --body "Auto-generated PR to sync $FROM_BRANCH into $BASE_BRANCH after recent merge." \
+            --body "Auto-generated PR to sync $FROM_BRANCH into $BASE_BRANCH after recent push to release-candidate." \
             --base $BASE_BRANCH \
-            --head sync-$FROM_BRANCH-to-$BASE_BRANCH \
-            --label "sync"
+            --head "$TEMP_BRANCH"
