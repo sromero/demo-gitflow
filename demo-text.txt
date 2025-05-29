@@ -1,2 +1,2 @@
 Initial commit
-HotFix typo.
+Fix typo.
