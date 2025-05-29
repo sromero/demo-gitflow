@@ -32,8 +32,7 @@ jobs:
           echo "➡️ Syncing $FROM_BRANCH → $TO_BRANCH"
           git fetch origin $TO_BRANCH
           git checkout -b $SYNC_BRANCH origin/$FROM_BRANCH
-          git pull origin $TO_BRANCH --no-rebase || echo "No conflicts during pull"
-
+          git pull origin $TO_BRANCH --allow-unrelated-histories --no-rebase || echo "No conflicts during pull"
           git push origin $SYNC_BRANCH
 
           gh pr create \
