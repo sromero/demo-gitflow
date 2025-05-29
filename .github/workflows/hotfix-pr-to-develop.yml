@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+
 permissions:
   contents: write
   pull-requests: write
@@ -32,12 +33,11 @@ jobs:
           echo "➡️ Syncing $FROM_BRANCH → $TO_BRANCH"
           git fetch origin $TO_BRANCH
           git checkout -b $SYNC_BRANCH origin/$FROM_BRANCH
-          git pull origin $TO_BRANCH --allow-unrelated-histories --no-rebase || echo "No conflicts during pull"
+
           git push origin $SYNC_BRANCH
 
           gh pr create \
             --title "🔥 Hotfix: Merge $FROM_BRANCH into $TO_BRANCH" \
             --body "Este PR fue creado automáticamente para sincronizar hotfixes de \`$FROM_BRANCH\` hacia \`$TO_BRANCH\`." \
             --base $TO_BRANCH \
-            --head $SYNC_BRANCH \
-            --label "sync"
+            --head $SYNC_BRANCH
