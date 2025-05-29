@@ -1,4 +1,4 @@
-name: Create PR from master to develop (Hotfix Sync)
+name: Hotfix PR to Develop
 
 on:
   push:
@@ -6,22 +6,36 @@ on:
       - master
 
 jobs:
-  create-pr:
+  create-hotfix-pr:
     runs-on: ubuntu-latest
-    if: github.event.pusher.name != 'github-actions[bot]'
-
+    if: github.actor != 'github-actions[bot]'
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Create PR from master to develop
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: develop
-          head: master
-          title: "🔧 Sync hotfix from master to develop"
-          body: |
-            This PR syncs hotfixes from `master` into `develop` automatically.
-          branch: auto/hotfix-to-develop
-          delete-branch: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FROM_BRANCH="master"
+          TO_BRANCH="develop"
+          SYNC_BRANCH="hotfix-${FROM_BRANCH}-to-${TO_BRANCH}-$(date +%s)"
+
+          echo "➡️ Syncing $FROM_BRANCH → $TO_BRANCH"
+          git fetch origin $TO_BRANCH
+          git checkout -b $SYNC_BRANCH origin/$FROM_BRANCH
+          git pull origin $TO_BRANCH --no-rebase || echo "No conflicts during pull"
+
+          git push origin $SYNC_BRANCH
+
+          gh pr create \
+            --title "🔥 Hotfix: Merge $FROM_BRANCH into $TO_BRANCH" \
+            --body "Este PR fue creado automáticamente para sincronizar hotfixes de \`$FROM_BRANCH\` hacia \`$TO_BRANCH\`." \
+            --base $TO_BRANCH \
+            --head $SYNC_BRANCH \
+            --label "sync"
